@@ -144,9 +144,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LeanWindows.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="WindowsMessageMap.h" />
     <ClInclude Include="WinException.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="hw3d.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\Downloads\bit_computer.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
