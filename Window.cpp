@@ -130,19 +130,33 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
         // Window destructor will run and clean up window
         return 0;
         break;
+    case WM_KILLFOCUS:
+        kbd.clearState();
+        break;
+    /*** Keyboard messages ***/
     case WM_KEYDOWN:
+    case WM_SYSKEYDOWN: // syskey commands should also be handled (ALT key)
+        if (!(lParam & 0x40000000) || kbd.autoRepeatIsEnabled()) {
+            kbd.onKeyPressed(static_cast<unsigned char>(wParam));
+        }
         if (wParam == 'F')
         {
             SetWindowText(hWnd, "Sonia");
         }
         break;
     case WM_KEYUP:
+    case WM_SYSKEYUP:
+        kbd.onKeyReleased(static_cast<unsigned char>(wParam));
         if (wParam == 'F')
         {
             SetWindowText(hWnd, "Sucks");
         }
         break;
+    case WM_CHAR:
+        kbd.onChar(static_cast<unsigned char>(wParam));
+        break;
     }
+    /*** End Keyboard messages ***/
     
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }

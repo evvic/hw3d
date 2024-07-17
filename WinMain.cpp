@@ -19,6 +19,9 @@ int CALLBACK WinMain(
 		while ((gResult = GetMessage(&msg, nullptr, 0, 0)) > 0) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+			if (wnd.kbd.keyIsPressed(VK_SPACE)) {
+				MessageBox(nullptr, "=D", "Trangster", MB_OK | MB_ICONEXCLAMATION);
+			}
 		}
 
 		// handle exit code
