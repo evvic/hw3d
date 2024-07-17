@@ -1,4 +1,6 @@
 #include "Window.h"
+#include <sstream>
+//#include "resource.h"
 
 Window::WindowClass Window::WindowClass::wndClass;
 
@@ -36,7 +38,7 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept
     return wndClass.hInst;
 }
 
-Window::Window(int width, int height, const char* name) noexcept {
+Window::Window(int width, int height, const char* name) {
     // calculate window size based on desired client region size
     RECT wr;
     wr.left = 100;
@@ -44,7 +46,9 @@ Window::Window(int width, int height, const char* name) noexcept {
     wr.top = 100;
     wr.bottom = height + wr.top;
 
-    AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
+    if (FAILED(AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE))) {
+        throw WND_LAST_EXCEPT();
+    }
 
     // create window & get hWnd
     hWnd = CreateWindow(
@@ -60,6 +64,10 @@ Window::Window(int width, int height, const char* name) noexcept {
         WindowClass::GetInstance(),
         this
     );
+    // check if error making window
+    if (hWnd == nullptr) {
+        throw WND_LAST_EXCEPT();
+    }
 
     // show window
     ShowWindow(hWnd, SW_SHOWDEFAULT);
@@ -107,6 +115,76 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
         // return here to handle program exiting
         // Window destructor will run and clean up window
         return 0;
+        break;
+    case WM_KEYDOWN:
+        if (wParam == 'F')
+        {
+            SetWindowText(hWnd, "Sonia");
+        }
+        break;
+    case WM_KEYUP:
+        if (wParam == 'F')
+        {
+            SetWindowText(hWnd, "Sucks");
+        }
+        break;
     }
+    
     return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+
+// Windows Exceptions
+Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
+    :
+    WinException(line, file),
+    hr(hr)
+{}
+
+const char* Window::Exception::what() const noexcept {
+    std::ostringstream oss;
+    oss << getType() << std::endl << "[Error Code] " << getErrorCode() << std::endl
+        << "[Description] " << getErrorString() << std::endl;
+
+    whatBuffer = oss.str();
+    return whatBuffer.c_str();
+}
+
+const char* Window::Exception::getType() const noexcept {
+    return "Window Exception";
+}
+
+std::string Window::Exception::tranlsateErrorCode(HRESULT hr) noexcept {
+    char* pMsgBuf = nullptr;
+
+    // windows will allocate memory for err string and make our pointer point to it
+    DWORD nMsgLen = FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr, hr,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        reinterpret_cast<LPSTR>(&pMsgBuf),
+        0, nullptr
+    );
+
+    // string length of 0 means it failed
+    if (nMsgLen == 0) {
+        return "Unidentified error code";
+    }
+
+    // copy error string from windows-allocated buffer to std::string
+    std::string errorString = pMsgBuf;
+
+    // free windows buffer
+    LocalFree(pMsgBuf);
+    return errorString;
+}
+
+HRESULT Window::Exception::getErrorCode() const noexcept {
+    return hr;
+}
+
+std::string Window::Exception::getErrorString() const noexcept {
+    return tranlsateErrorCode(hr);
 }
